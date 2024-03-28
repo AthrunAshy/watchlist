@@ -4,9 +4,9 @@ from markupsafe import escape  # 导入 escape
 app = Flask(__name__)  # 实例化该类
 
 
-# 定义虚拟数据
-name = 'Athrun'
-movies = [
+# 定义虚拟数据，可用 faker 库的 Faker 类来生成虚拟数据，这里直接输入了
+NAME = 'Athrun'
+MOVIES = [
     {'title': 'The Shawshank Redemption', 'year': 1994},
     {'title': 'The Godfather', 'year': 1972},
     {'title': 'The Dark Knight', 'year': 2008},
@@ -27,22 +27,23 @@ def hello():  # 视图函数，用于处理请求
     return 'Welcome to My Watchlist!'  # 视图函数内容
     # return '<h1>Hello Totoro!</h1><img src="http://helloflask.com/totoro.gif">'  # 此处可按HTML规则
 
-# @app.route('/user/<name>')  # 尖括号来表示动态路由，根据请求的name不同而得到不同的 URL路径
-# def user_page(name):
-#     return f'User: {escape(name)}'  # escape() 函数对 name 变量进行转义处理，防止用户输入中出现恶意代码
+@app.route('/user/<name>')  # 尖括号来表示动态路由，根据请求的name不同而得到不同的 URL路径
+def user_page(name):
+    # return f'User: {escape(name)}'  # escape() 函数对 name 变量进行转义处理，防止用户输入中出现恶意代码
+    return render_template('index.html', jname=name, jmovies=MOVIES)
 
-# @app.route('/test')
-# def test_url_for():
-#     print(url_for('hello'))  # 在命令行窗口查看输出的 URL
-#     print(url_for('user_page', name='Athrun'))
-#     print(url_for('user_page', name='Bob'))
-#     print('test_url_for')
-#     # 下面这个调用传入了多余的关键字参数，它们会被作为查询字符串附加到 URL 后面
-#     # 用来向指定的资源传递参数 问号?开始，以键值对的形式写出，多个键值对之间使用&分隔
-#     print(url_for('test_url_for', num=2))  # 输出：/test?num=2 
-#     return 'Test page'
+@app.route('/test')
+def test_url_for():
+    print(url_for('hello'))  # 在命令行窗口查看输出的 URL
+    print(url_for('user_page', name='Athrun'))
+    print(url_for('user_page', name='Bob'))
+    print('test_url_for')
+    # 下面这个调用传入了多余的关键字参数，它们会被作为查询字符串附加到 URL 后面
+    # 用来向指定的资源传递参数 问号?开始，以键值对的形式写出，多个键值对之间使用&分隔
+    print(url_for('test_url_for', num=2))  # 输出：/test?num=2 
+    return 'Test page'
 
-@app.route('/index')
-def index():
-    # 左边的jname是模版中使用的变量名称，将定义的虚拟数据传入index
-    return render_template('index.html', jname=name, jmovies=movies)
+# @app.route('/index')
+# def index():
+#     # 左边的jname是模版中使用的变量名称，将定义的虚拟数据传入index
+#     return render_template('index.html', jname=NAME, jmovies=MOVIES)
