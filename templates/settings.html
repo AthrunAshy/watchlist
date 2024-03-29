@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h3>Settings</h3>
+<form method="post">
+    {# required value="{{ current_user.name }}取出当前用户的用户名，预先填充在输入字段中 #}
+    Your Name <input type="text" name="name" autocomplete="off" required value="{{ current_user.name }}">
+    <input class="btn" type="submit" name="submit" value="Save">
+</form>
+{% endblock %}
