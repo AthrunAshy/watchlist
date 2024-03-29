@@ -3,7 +3,8 @@ import os
 import sys
 import click
 
-from flask import Flask, url_for, render_template  # 从 flask 包导入 Flask 类
+from flask import Flask # 从 flask 包导入 Flask 类
+from flask import request, url_for, render_template, redirect, flash
 # from markupsafe import escape  # 导入 escape
 from flask_sqlalchemy import SQLAlchemy
 
@@ -16,6 +17,7 @@ else:
 app = Flask(__name__)  # 实例化该类
 app.config['SQLALCHEMY_DATABASE_URI'] = prefix + os.path.join(app.root_path, 'data.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = 'dev'  # 设置数据签名所需的密钥
 db = SQLAlchemy(app)  # 初始化扩展，传入上面的程序实例 app
 
 
@@ -50,11 +52,53 @@ def inject_user():
     user = User.query.first()
     return {"user":user}
 
-@app.route('/index')
+# GET 请求用来获取资源，而 POST 则用来创建 / 更新资源；访问链接时会发送 GET 请求，提交表单会发送 POST 请求
+# app.route() 里，可用 methods 关键字传递一个包含 HTTP 方法字符串的列表，表示这个视图函数处理哪种方法类型的请求
+# 默认只接受 GET 请求，methods=['GET','POST']表示同时接受 GET 和 POST 请求，针对不同请求采用不同方法
+@app.route('/index',methods=['GET','POST'])  # 定义了methods后，index.html POST 的表单就能被视图函数正确读取
 def index():
+    if request.method == 'POST':  # 判断请求类型
+        title = request.form.get('title')
+        year = request.form.get('year')  # 将request的表单数据分别放入title和year
+        if len(title) > 60 or len(year) != 4 or not title or not year:  # 判断数据是否有误
+            flash('Invalid input.')  # flash() 函数用来在视图函数里向模板传递提示消息
+            return redirect(url_for('index'))  # 重定向回首页
+        movie = Movie(title=title, year=year)  # 数据格式无误，加入数据库
+        db.session.add(movie)
+        db.session.commit()
+        flash('Item created.')
+        return redirect(url_for('index'))
+    # request请求为默认GET时，渲染index.html
     movies = Movie.query.all()
     # 左边的 movies 是模版中使用的变量名称，将定义的虚拟数据传入index.html
     return render_template('index.html', movies=movies)
+
+# 注意methods=[]对应列表，method=''对应单种HTTP方法
+@app.route('/movie/edit/<int:movie_id>', methods=['GET','POST'])  # <int> 将传入的movie_id转为整型，合并为URL一部分
+def edit(movie_id):
+    movie = Movie.query.get_or_404(movie_id)  # 从request中获取要编辑的movie_id，若没找到则返回404错误
+    
+    if request.method == 'POST':
+        title = request.form['title']  # 从request中取出新的title和year
+        year = request.form['year']
+        if len(title) > 60 or len(year) != 4 or not title or not year:  # 判断新数据是否符合数据库的要求
+            flash('Invalid input.')
+            return redirect(url_for('edit',movie_id=movie_id))  # 数据格式有误，重定向回编辑页面
+        movie.title = title
+        movie.year = year  # movie从Movie中取出来后，movie的title和year变化了，commit之后数据库中对应的元素也变化了
+        db.session.commit()
+        flash('Item updated.')  # 提示已完成编辑
+        return redirect(url_for('index'))  # 编辑完成，返回index页面
+        
+    return render_template('edit.html', movie=movie)  # 无论渲染
+
+@app.route('/movie/delete/<int:movie_id>',methods=['POST'])  # # 限定只接受 POST 请求
+def delete(movie_id):
+    movie = Movie.query.get_or_404(movie_id)
+    db.session.delete(movie)
+    db.session.commit()
+    flash('Item deleted')
+    return redirect(url_for('index'))
 
 # 注册一个错误处理函数，当404错误发生时会触发
 @app.errorhandler(404)  # 传入要处理的错误代码
