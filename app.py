@@ -168,15 +168,15 @@ def settings():
         return redirect(url_for('index'))
     return render_template('settings.html')
 
-@app.route('/test')
-def test_url_for():
-    print(url_for('hello'))  # 在命令行窗口查看输出的 URL
-    print(url_for('user_page', name='Athrun'))
-    print('test_url_for')
-    # 下面这个调用传入了多余的关键字参数，它们会被作为查询字符串附加到 URL 后面
-    # 用来向指定的资源传递参数 问号 ? 开始，以键值对的形式写出，多个键值对之间使用 & 分隔
-    print(url_for('test_url_for', num=2))  # 输出：/test?num=2 
-    return 'Test page'
+# @app.route('/test')
+# def test_url_for():
+#     print(url_for('hello'))  # 在命令行窗口查看输出的 URL
+#     print(url_for('user_page', name='Athrun'))
+#     print('test_url_for')
+#     # 下面这个调用传入了多余的关键字参数，它们会被作为查询字符串附加到 URL 后面
+#     # 用来向指定的资源传递参数 问号 ? 开始，以键值对的形式写出，多个键值对之间使用 & 分隔
+#     print(url_for('test_url_for', num=2))  # 输出：/test?num=2 
+#     return 'Test page'
 
 # 注册为flask命令，这样可以在命令行中通过 flask initdb 来调用这个函数
 @app.cli.command()
@@ -233,7 +233,6 @@ def admin(username, password):
     # 判断当前是否已有账户
     if user:
         click.echo('Updating user...')
-        user.name = 'Admin'
         user.username = username
         user.set_password(password)
     else:
@@ -241,7 +240,6 @@ def admin(username, password):
         # 数据库中为空时，要先实例化，才能add
         user = User()
         user.username = username
-        user.name='Admin'
         user.set_password(password)
         db.session.add(user)
     db.session.commit()
