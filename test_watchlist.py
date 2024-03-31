@@ -162,6 +162,7 @@ class WatchlistTestCase(unittest.TestCase):
 
     # 测试登录
     def test_login(self):
+        # 按照 setUp 设置的 username 和 password 看能否正常登录
         response = self.client.post('/login', data=dict(
             username='test',
             password='123'
@@ -176,40 +177,40 @@ class WatchlistTestCase(unittest.TestCase):
         self.assertIn('<form method="post">', data)
 
         # 测试使用错误的密码登录
-        response = self.client.post('/login', data={
-            'username':'test',
-            'passwor':'456'
-        }, follow_redirects=True)
+        response = self.client.post('/login', data=dict(
+            username='test',
+            password='456'
+        ), follow_redirects=True)
         data = response.get_data(as_text=True)
         self.assertNotIn('Login success.', data)
-        # self.assertIn('Invalid username or password.', data)
+        self.assertIn('Invalid username or password.', data)
 
         # 测试使用错误的用户名登录
-        response = self.client.post('/login', data={
-            'username':'wronguser',
-            'passwor':'123'
-        }, follow_redirects=True)
+        response = self.client.post('/login', data=dict(
+            username='wrong',
+            password='123'
+        ), follow_redirects=True)
         data = response.get_data(as_text=True)
         self.assertNotIn('Login success.', data)
-        # self.assertIn('Invalid username or password.', data)
+        self.assertIn('Invalid username or password.', data)
 
         # 测试使用空的密码登录
-        response = self.client.post('/login', data={
-            'username':'test',
-            'passwor':''
-        }, follow_redirects=True)
+        response = self.client.post('/login', data=dict(
+            username='test',
+            password=''
+        ), follow_redirects=True)
         data = response.get_data(as_text=True)
         self.assertNotIn('Login success.', data)
-        # self.assertIn('Invalid username or password.', data)
+        self.assertIn('Invalid input.', data)
 
         # 测试使用空的用户名登录
-        response = self.client.post('/login', data={
-            'username':'',
-            'passwor':'123'
-        }, follow_redirects=True)
+        response = self.client.post('/login', data=dict(
+            username='',
+            password='123'
+        ), follow_redirects=True)
         data = response.get_data(as_text=True)
         self.assertNotIn('Login success.', data)
-        # self.assertIn('Invalid username or password.', data)
+        self.assertIn('Invalid input.', data)
 
 # 测试登出
     def test_logout(self):
@@ -271,8 +272,8 @@ class WatchlistTestCase(unittest.TestCase):
         db.create_all()
         # 待测试命令需要输入参数，就用 args 关键字直接给出命令参数列表
         result = self.runner.invoke(args=['admin', '--username', 'Athrun', '--password', '123'])
-        # self.assertIn('Creating user...', result.output)
-        # self.assertIn('Done.', result.output)
+        self.assertIn('Creating user...', result.output)
+        self.assertIn('Done.', result.output)
         self.assertEqual(User.query.count(), 1)
         self.assertEqual(User.query.first().username, 'Athrun')
         self.assertTrue(User.query.first().validate_password('123'))
@@ -281,8 +282,8 @@ class WatchlistTestCase(unittest.TestCase):
     def test_admin_command_update(self):
         # 上一个测试中已经建立了一个测试的管理员账户，下面要更新这个账户
         result = self.runner.invoke(args=['admin', '--username', 'Ashy', '--password', '456'])
-        # self.assertIn('Updating user...', result.output)
-        # self.assertIn('Done.', result.output)
+        self.assertIn('Updating user...', result.output)
+        self.assertIn('Done.', result.output)
         self.assertEqual(User.query.count(), 1)
         self.assertEqual(User.query.first().username, 'Ashy')
         self.assertTrue(User.query.first().validate_password('456'))

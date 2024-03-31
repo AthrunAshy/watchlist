@@ -17,9 +17,10 @@ if WIN:
 else:
     prefix = 'sqlite:////'  # 其他系统用四斜线
 app = Flask(__name__)  # 实例化该类
-app.config['SQLALCHEMY_DATABASE_URI'] = prefix + os.path.join(app.root_path, 'data.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = prefix + os.path.join(os.path.dirname(app.root_path), os.getenv('DATABASE_FILE', 'data.db'))
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'dev'  # 设置数据签名所需的密钥
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev')  # 设置数据签名所需的密钥
+
 db = SQLAlchemy(app)  # 初始化扩展，传入上面的程序实例 app
 login_manager = LoginManager(app)  # 实例化扩展类
 
@@ -27,6 +28,8 @@ login_manager = LoginManager(app)  # 实例化扩展类
 def load_user(user_id):  # 创建用户加载回调函数，接受 user ID 作为参数
     user = User.query.get(int(user_id))  # 用 ID 作为 User 模型的主键查询对应的用户，原本的User类要继承 Flask-Login 提供的 UserMixin 类
     return user  # 返回用户对象
+
+
 login_manager.login_view = 'login'  # 将login页面设置为重定向目标
 # login_manager.login_message = 'Please log in.'  # 自定义未登录的报错信息
 
@@ -126,7 +129,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
         if not username or not password:
-            flash('Invalid input')
+            flash('Invalid input.')
             return redirect(url_for('login'))
         user = User.query.first()
         if username == user.username and user.validate_password(password):  # 验证用户名和密码
@@ -231,15 +234,14 @@ def admin(username, password):
     db.create_all()
     user = User.query.first()
     # 判断当前是否已有账户
-    if user:
+    if user is not None:
         click.echo('Updating user...')
         user.username = username
         user.set_password(password)
     else:
         click.echo('Creating user...')
         # 数据库中为空时，要先实例化，才能add
-        user = User()
-        user.username = username
+        user = User(username=username,name='Admin')
         user.set_password(password)
         db.session.add(user)
     db.session.commit()
